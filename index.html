@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
@@ -38,7 +38,10 @@
             flex-wrap: wrap;
             gap: 8px;
             z-index: 10;
+            transition: all 0.3s;
         }
+        .top-bar.hidden { display: none; }
+
         .top-bar .brand { display: flex; align-items: center; gap: 10px; }
         .top-bar .brand i { font-size: 28px; color: #e50914; text-shadow: 0 0 20px rgba(229,9,20,0.5); }
         .top-bar .brand span { font-size: 24px; font-weight: 700; letter-spacing: 2px; background: linear-gradient(45deg, #f5f5f5, #aaaaaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -49,51 +52,124 @@
         .top-bar .search-box input::placeholder { color: #777; }
         .top-bar .search-box i { color: #999; font-size: 16px; }
 
-        .plasma-container { display: flex; flex: 1; height: calc(100vh - 75px); background: #0a0a0a; padding: 12px; gap: 12px; }
+        .plasma-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 75px);
+            background: #0a0a0a;
+            padding: 12px;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+        .plasma-container.fullscreen-mode .player-area {
+            flex: 1;
+        }
+        .plasma-container.fullscreen-mode .channel-list {
+            display: none;
+        }
 
         .player-area {
-            flex: 3; background: #000; border-radius: 16px; overflow: hidden; position: relative;
+            flex: 3;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
             box-shadow: 0 0 30px rgba(229,9,20,0.15), inset 0 0 40px rgba(0,0,0,0.8);
-            border: 2px solid #2a2a2a; min-height: 350px; display: flex; align-items: center; justify-content: center;
+            border: 2px solid #2a2a2a;
+            min-height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
         }
-        .player-area video { width: 100%; height: 100%; display: block; background: #0a0a0a; object-fit: contain; }
+        .player-area video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #0a0a0a;
+            object-fit: contain;
+        }
         .player-area .watermark {
-            position: absolute; bottom: 15px; left: 20px; color: rgba(255,255,255,0.12);
-            font-size: 13px; letter-spacing: 2px; pointer-events: none;
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            color: rgba(255,255,255,0.12);
+            font-size: 13px;
+            letter-spacing: 2px;
+            pointer-events: none;
+            z-index: 5;
         }
         .fullscreen-btn {
-            position: absolute; top: 15px; right: 15px; z-index: 20;
-            background: rgba(0,0,0,0.6); border: 1px solid #444; color: #fff;
-            width: 40px; height: 40px; border-radius: 10px; font-size: 20px;
-            cursor: pointer; transition: 0.3s; backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 20;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #444;
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .fullscreen-btn:hover { background: #e50914; border-color: #e50914; transform: scale(1.05); }
 
         .channel-list {
-            flex: 1.2; background: #121212; border-radius: 16px; padding: 8px 0 8px 8px;
-            overflow-y: auto; border: 2px solid #222; box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
-            min-width: 240px; max-width: 340px; scroll-behavior: smooth;
+            flex: 1.2;
+            background: #121212;
+            border-radius: 16px;
+            padding: 8px 0 8px 8px;
+            overflow-y: auto;
+            border: 2px solid #222;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
+            min-width: 240px;
+            max-width: 340px;
+            scroll-behavior: smooth;
+            transition: all 0.3s;
         }
+        .channel-list.hidden { display: none; }
+
         .channel-list::-webkit-scrollbar { width: 5px; }
         .channel-list::-webkit-scrollbar-thumb { background: #e50914; border-radius: 10px; }
         .channel-list::-webkit-scrollbar-track { background: #1a1a1a; }
 
         .category-title {
-            font-size: 14px; font-weight: 700; color: #e50914; padding: 10px 12px 4px 8px;
-            border-bottom: 1px solid #2a2a2a; margin-top: 8px; display: flex; align-items: center; gap: 8px;
-            letter-spacing: 1px; text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 700;
+            color: #e50914;
+            padding: 10px 12px 4px 8px;
+            border-bottom: 1px solid #2a2a2a;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
         .category-title i { font-size: 15px; }
         .category-title .count { margin-left: auto; font-size: 11px; color: #666; }
 
         .channel-item {
-            display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px;
-            margin: 3px 6px 3px 0; border-radius: 10px; cursor: pointer; transition: all 0.15s ease;
-            background: transparent; border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px 8px 8px;
+            margin: 3px 6px 3px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: transparent;
+            border-left: 3px solid transparent;
         }
         .channel-item:hover { background: #1e1e1e; border-left-color: #e50914; transform: translateX(3px); }
         .channel-item.active { background: #1e1e1e; border-left-color: #e50914; box-shadow: 0 0 12px rgba(229,9,20,0.15); }
+        .channel-item.focus { outline: 2px solid #ffaa00; outline-offset: -2px; background: #1e1e1e; border-left-color: #ffaa00; }
         .channel-item img { width: 34px; height: 34px; object-fit: contain; border-radius: 6px; background: #222; padding: 3px; flex-shrink: 0; }
         .channel-item .ch-info { flex: 1; min-width: 0; }
         .channel-item .ch-info .ch-name { font-size: 14px; font-weight: 500; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
@@ -104,8 +180,85 @@
         .status-dot.red { background: #ff2244; box-shadow: 0 0 10px #ff2244; }
 
         .channel-item .ch-badge {
-            background: #2a2a2a; color: #999; font-size: 9px; padding: 2px 7px; border-radius: 30px; white-space: nowrap;
+            background: #2a2a2a;
+            color: #999;
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 30px;
+            white-space: nowrap;
         }
+
+        /* مؤشر الفارة */
+        .giant-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+        .giant-cursor.active {
+            display: block;
+        }
+        .giant-cursor .cursor-dot {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 4px solid #ffaa00;
+            box-shadow: 0 0 40px rgba(255, 170, 0, 0.6), inset 0 0 30px rgba(255, 170, 0, 0.2);
+            transform: translate(-50%, -50%);
+            transition: none;
+            pointer-events: none;
+        }
+        .giant-cursor .cursor-dot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            background: #ffaa00;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #ffaa00;
+        }
+        .giant-cursor .cursor-ring {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 170, 0, 0.3);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: spin 6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .cursor-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffaa00;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            border: 1px solid #ffaa00;
+            z-index: 10000;
+            display: none;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+        .cursor-hint.active { display: block; }
+        .cursor-hint i { margin: 0 8px; }
 
         @media (max-width: 992px) {
             .plasma-container { flex-direction: column; height: auto; padding: 8px; }
@@ -120,6 +273,8 @@
             .channel-item { padding: 6px 8px; }
             .channel-item img { width: 28px; height: 28px; }
             .progress-bar-bg { width: 90%; }
+            .giant-cursor .cursor-dot { width: 60px; height: 60px; }
+            .giant-cursor .cursor-ring { width: 100px; height: 100px; }
         }
     </style>
 </head>
@@ -137,7 +292,7 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="mainApp">
-        <div class="top-bar">
+        <div class="top-bar" id="topBar">
             <div class="brand">
                 <i class="fas fa-tv"></i>
                 <span>بلازما TV <small>العالم</small></span>
@@ -147,14 +302,23 @@
                 <input type="text" id="searchInput" placeholder="ابحث عن قناة..." onkeyup="filterChannels()">
             </div>
         </div>
-        <div class="plasma-container">
+        <div class="plasma-container" id="plasmaContainer">
             <div class="player-area" id="playerArea">
-                <video id="livePlayer" controls autoplay playsinline muted></video>
+                <video id="livePlayer" controls autoplay playsinline></video>
                 <button class="fullscreen-btn" id="fullscreenBtn" title="تكبير"><i class="fas fa-expand"></i></button>
                 <div class="watermark" id="watermarkText">⚡ HD</div>
             </div>
             <div class="channel-list" id="channelList"></div>
         </div>
+    </div>
+
+    <!-- الفارة العملاقة -->
+    <div class="giant-cursor" id="giantCursor">
+        <div class="cursor-ring"></div>
+        <div class="cursor-dot" id="cursorDot"></div>
+    </div>
+    <div class="cursor-hint" id="cursorHint">
+        <i class="fas fa-arrows-alt"></i> استخدم الأسهم للتنقل | OK للتحديد <i class="fas fa-arrows-alt"></i>
     </div>
 
     <script>
@@ -235,7 +399,7 @@
         ];
 
         // ================================================================
-        //  2. القنوات القديمة (من pavzwe سابقاً)
+        //  2. القنوات القديمة (من pavzwe سابقاً) - مختصرة للطول
         // ================================================================
         const oldM3URaw = `#EXTM3U
 #EXTINF:0 tvg-country="DZ" tvg-logo="https://i.imgur.com/507piHp.png" group-title="Kids",4Kids TV
@@ -477,7 +641,7 @@ https://streaming.zagros.tv/sd/playlist.m3u8?checkedby:iptvcat.com
 `;
 
         // ================================================================
-        //  3. القنوات الجديدة (المباريات)
+        //  3. القنوات الجديدة (المباريات) - مختصرة
         // ================================================================
         const newM3URaw = `#EXTINF:-1, BEIN Sport 1
 http://62.210.245.19:8000/live/testapp/testapp/81.ts
@@ -863,7 +1027,7 @@ http://176.31.226.149:25461/live/testest/testest/342.ts
 `;
 
         // ================================================================
-        //  4. القنوات من pavzwe.txt (القديمة)
+        //  4. القنوات من pavzwe.txt (القديمة) - مختصرة
         // ================================================================
         const oldPavzweRaw = `bein sports premium 1 http://172.25.25.102:80/beinsport-HD1/index.m3u8
 bein sports premium 2 http://172.25.25.102:80/beinsport-HD2/index.m3u8
@@ -1086,7 +1250,7 @@ ELEVEN 1 http://172.25.25.182:80/eleven1/index.m3u8
 ELEVEN 2 http://172.25.25.102:80/eleven2/index.m3u8`;
 
         // ================================================================
-        //  5. القنوات الجديدة من pavzwe.txt (الملف الجديد)
+        //  5. القنوات الجديدة من pavzwe.txt (الملف الجديد) - مختصرة
         // ================================================================
         const newPavzweRaw = `#EXTM3U
 #EXTINF:0 tvg-country="TR" tvg-logo="" group-title="Undefined",1TV GEO
@@ -1973,19 +2137,34 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         }
 
         // ================================================================
-        //  10. منطق التحميل التدريجي والاختبار الدوري
+        //  10. منطق التحميل التدريجي والاختبار الدوري + التحكم عن بعد
         // ================================================================
         const loadingScreen = document.getElementById('loadingScreen');
         const mainApp = document.getElementById('mainApp');
         const progressFill = document.getElementById('progressFill');
         const progressPercent = document.getElementById('progressPercent');
+        const video = document.getElementById('livePlayer');
+        const container = document.getElementById('plasmaContainer');
+        const topBar = document.getElementById('topBar');
+        const channelList = document.getElementById('channelList');
 
-        let activeChannels = [];      // القنوات المؤكد شغلها (تظهر للمستخدم)
-        let testingIndex = 0;          // آخر قناة تم اختبارها من allChannels
+        let activeChannels = [];
+        let testingIndex = 0;
         let isTestingComplete = false;
         let periodicTimer = null;
+        let currentChannel = null;
+        let hls = null;
 
-        // دالة عرض القنوات النشطة
+        // متغيرات التحكم عن بعد (فارة)
+        let cursorActive = false;
+        let focusedIndex = 0; // فهرس القناة المحددة في قائمة activeChannels
+
+        // عناصر الفارة
+        const giantCursor = document.getElementById('giantCursor');
+        const cursorDot = document.getElementById('cursorDot');
+        const cursorHint = document.getElementById('cursorHint');
+
+        // دالة العرض مع التركيز
         function renderActiveChannels(filter = '') {
             const container = document.getElementById('channelList');
             container.innerHTML = '';
@@ -2015,6 +2194,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             });
 
             let hasResults = false;
+            let globalIndex = 0;
             sortedRegions.forEach(region => {
                 let items = regions[region];
                 if (lowerFilter) {
@@ -2029,11 +2209,14 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 container.appendChild(titleDiv);
 
                 items.forEach(ch => {
-                    // القنوات في activeChannels كلها شغالة، نضع أخضر ثابت
                     const item = document.createElement('div');
                     item.className = 'channel-item';
                     if (currentChannel && currentChannel.url === ch.url) item.classList.add('active');
-                    item.setAttribute('data-url', encodeURIComponent(ch.url));
+                    // تحديد التركيز إذا كان هذا العنصر هو العنصر المحدد
+                    if (globalIndex === focusedIndex) {
+                        item.classList.add('focus');
+                    }
+                    item.setAttribute('data-index', globalIndex);
                     const logoUrl = ch.logo && ch.logo.startsWith('http') ? ch.logo : 'https://via.placeholder.com/34/222/666?text=TV';
                     item.innerHTML = `
                         <img src="${logoUrl}" alt="${ch.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/34/222/666?text=TV'">
@@ -2046,21 +2229,44 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                         </div>
                         <span class="ch-badge" style="color:#00ff88;">مباشر</span>
                     `;
-                    item.addEventListener('click', () => { playChannel(ch); });
+                    item.addEventListener('click', () => {
+                        playChannel(ch);
+                        // تحديث التركيز إلى هذه القناة
+                        focusedIndex = globalIndex;
+                        renderActiveChannels(document.getElementById('searchInput').value);
+                    });
                     container.appendChild(item);
+                    globalIndex++;
                 });
             });
 
             if (!hasResults) {
                 container.innerHTML = `<div style="padding:20px;text-align:center;color:#555;"><i class="fas fa-search" style="font-size:30px;display:block;margin-bottom:10px;"></i>لا توجد قنوات تطابق البحث</div>`;
             }
+
+            // بعد الإعادة، إذا كانت هناك قنوات و cursorActive نعيد تركيز المؤشر
+            if (cursorActive && activeChannels.length > 0) {
+                // تحديث موقع المؤشر بناءً على العنصر المحدد
+                const items = container.querySelectorAll('.channel-item');
+                if (items.length > 0 && focusedIndex < items.length) {
+                    const el = items[focusedIndex];
+                    el.classList.add('focus');
+                    // نحرك المؤشر إلى منتصف العنصر
+                    const rect = el.getBoundingClientRect();
+                    const x = rect.left + rect.width / 2;
+                    const y = rect.top + rect.height / 2;
+                    cursorDot.style.left = x + 'px';
+                    cursorDot.style.top = y + 'px';
+                    const ring = document.querySelector('.giant-cursor .cursor-ring');
+                    if (ring) {
+                        ring.style.left = x + 'px';
+                        ring.style.top = y + 'px';
+                    }
+                }
+            }
         }
 
-        // دالة تشغيل قناة (نفسها)
-        const video = document.getElementById('livePlayer');
-        let hls = null;
-        let currentChannel = null;
-
+        // دالة تشغيل قناة
         function initHLS(url) {
             if (hls) { hls.destroy(); hls = null; }
             if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2091,10 +2297,16 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 if (activeItem) activeItem.classList.add('active');
                 document.title = `${channel.name} - بلازما TV`;
                 document.getElementById('watermarkText').textContent = `${channel.name} ⚡ HD`;
+                // التأكد من أن الفيديو في وضع ملء الشاشة إذا لم يكن كذلك
+                if (!document.fullscreenElement && !container.classList.contains('fullscreen-mode')) {
+                    // محاولة التكبير التلقائي
+                    const playerArea = document.getElementById('playerArea');
+                    playerArea.requestFullscreen().catch(() => {});
+                }
             }
         }
 
-        // دالة اختبار مجموعة من القنوات وإضافتها إلى activeChannels إذا كانت شغالة
+        // دالة اختبار مجموعة من القنوات
         async function testBatch(channelsBatch) {
             const promises = channelsBatch.map(ch => quickTest(ch.url));
             const results = await Promise.all(promises);
@@ -2106,27 +2318,21 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             });
             if (newActive.length > 0) {
                 activeChannels = [...activeChannels, ...newActive];
-                // إعادة العرض
                 renderActiveChannels(document.getElementById('searchInput').value);
-                // إذا لم تكن هناك قناة مشغلة حالياً، نشغل أول قناة من الجديد
                 if (!currentChannel && newActive.length > 0) {
                     playChannel(newActive[0]);
                 }
             }
-            // تحديث شريط التقدم
             const tested = Math.min(testingIndex, allChannels.length);
             const percent = Math.round((tested / allChannels.length) * 100);
             progressFill.style.width = percent + '%';
             progressPercent.textContent = percent + '%';
         }
 
-        // دالة اختبار الدفعة التالية (10 قنوات)
         async function testNextBatch() {
             if (testingIndex >= allChannels.length) {
-                // انتهى اختبار جميع القنوات
                 if (!isTestingComplete) {
                     isTestingComplete = true;
-                    // بدء الدورة الدورية لإعادة اختبار القنوات النشطة كل 5 ثوانٍ
                     startPeriodicTesting();
                 }
                 return;
@@ -2134,26 +2340,21 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             const batch = allChannels.slice(testingIndex, testingIndex + 10);
             testingIndex += batch.length;
             await testBatch(batch);
-            // جدولة الدفعة التالية بعد 5 ثوانٍ (حتى لا نضغط على الشبكة)
             if (testingIndex < allChannels.length) {
                 setTimeout(testNextBatch, 5000);
             } else {
-                // انتهى الكل
                 isTestingComplete = true;
                 startPeriodicTesting();
             }
         }
 
-        // دورة إعادة الاختبار الدوري (كل 5 ثوانٍ)
         function startPeriodicTesting() {
             if (periodicTimer) clearInterval(periodicTimer);
             periodicTimer = setInterval(async () => {
                 if (activeChannels.length === 0) return;
-                // نأخذ نسخة من القنوات النشطة حالياً ونختبرها جميعاً
                 const toTest = [...activeChannels];
                 const promises = toTest.map(ch => quickTest(ch.url));
                 const results = await Promise.all(promises);
-                // نقوم بتصفية القنوات التي فشلت
                 const failed = [];
                 const stillActive = [];
                 toTest.forEach((ch, idx) => {
@@ -2164,41 +2365,148 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                     }
                 });
                 if (failed.length > 0) {
-                    // إزالة الفاشلة من activeChannels
                     const failedUrls = new Set(failed.map(ch => ch.url));
                     activeChannels = activeChannels.filter(ch => !failedUrls.has(ch.url));
-                    // إعادة العرض
                     renderActiveChannels(document.getElementById('searchInput').value);
-                    // إذا كانت القناة الحالية من الفاشلة، نوقف التشغيل أو ننتقل لأول قناة
                     if (currentChannel && failedUrls.has(currentChannel.url)) {
-                        // نبحث عن أول قناة شغالة
                         const nextChannel = activeChannels.length > 0 ? activeChannels[0] : null;
                         if (nextChannel) {
                             playChannel(nextChannel);
                         } else {
-                            // لا توجد قنوات شغالة، نوقف الفيديو
                             video.pause();
                             currentChannel = null;
+                            document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات';
                         }
+                    }
+                    // إذا كان المؤشر خارج النطاق، نعدله
+                    if (focusedIndex >= activeChannels.length) {
+                        focusedIndex = Math.max(0, activeChannels.length - 1);
+                        if (cursorActive) renderActiveChannels(document.getElementById('searchInput').value);
                     }
                 }
             }, 5000);
         }
 
-        // دالة البحث (تطبق على القنوات النشطة)
         function filterChannels() {
-            const input = document.getElementById('searchInput');
-            renderActiveChannels(input.value);
+            renderActiveChannels(document.getElementById('searchInput').value);
         }
 
         // ================================================================
-        //  11. بدء التحميل
+        //  11. التحكم عن بعد (الفارة + أزرار التلفزيون)
+        // ================================================================
+        function toggleCursor() {
+            cursorActive = !cursorActive;
+            if (cursorActive) {
+                giantCursor.classList.add('active');
+                cursorHint.classList.add('active');
+                // إخفاء شريط البحث العلوي لتوسيع العرض
+                topBar.classList.add('hidden');
+                container.classList.add('fullscreen-mode');
+                // نبدأ بتركيز أول قناة
+                if (activeChannels.length > 0) {
+                    focusedIndex = 0;
+                    renderActiveChannels(document.getElementById('searchInput').value);
+                    // وضع المؤشر على أول قناة
+                    const items = channelList.querySelectorAll('.channel-item');
+                    if (items.length > 0) {
+                        const rect = items[0].getBoundingClientRect();
+                        const x = rect.left + rect.width / 2;
+                        const y = rect.top + rect.height / 2;
+                        cursorDot.style.left = x + 'px';
+                        cursorDot.style.top = y + 'px';
+                        const ring = document.querySelector('.giant-cursor .cursor-ring');
+                        if (ring) {
+                            ring.style.left = x + 'px';
+                            ring.style.top = y + 'px';
+                        }
+                    }
+                }
+                // تعطيل مؤشر الماوس العادي
+                document.body.style.cursor = 'none';
+            } else {
+                giantCursor.classList.remove('active');
+                cursorHint.classList.remove('active');
+                topBar.classList.remove('hidden');
+                container.classList.remove('fullscreen-mode');
+                document.body.style.cursor = 'default';
+                // إزالة التركيز
+                document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('focus'));
+            }
+        }
+
+        // حدث لوحة المفاتيح للتحكم عن بعد
+        document.addEventListener('keydown', (e) => {
+            // زر الفاره: نستخدم زر "1" لتفعيل/إلغاء الفارة
+            if (e.key === '1' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                e.preventDefault();
+                toggleCursor();
+                return;
+            }
+
+            if (!cursorActive) return;
+
+            const items = channelList.querySelectorAll('.channel-item');
+            if (items.length === 0) return;
+
+            let newIndex = focusedIndex;
+
+            switch (e.key) {
+                case 'ArrowDown':
+                case 'ArrowRight':
+                    e.preventDefault();
+                    newIndex = Math.min(items.length - 1, focusedIndex + 1);
+                    break;
+                case 'ArrowUp':
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    newIndex = Math.max(0, focusedIndex - 1);
+                    break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    // تشغيل القناة المحددة
+                    const targetItem = items[focusedIndex];
+                    if (targetItem) {
+                        const idx = parseInt(targetItem.getAttribute('data-index'));
+                        if (!isNaN(idx) && idx < activeChannels.length) {
+                            playChannel(activeChannels[idx]);
+                            // تحديث التظليل
+                            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+                            targetItem.classList.add('active');
+                        }
+                    }
+                    return;
+                default:
+                    return;
+            }
+
+            if (newIndex !== focusedIndex) {
+                focusedIndex = newIndex;
+                // تحديث التركيز
+                items.forEach((el, i) => {
+                    el.classList.toggle('focus', i === focusedIndex);
+                });
+                // تحديث موقع المؤشر
+                const el = items[focusedIndex];
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                cursorDot.style.left = x + 'px';
+                cursorDot.style.top = y + 'px';
+                const ring = document.querySelector('.giant-cursor .cursor-ring');
+                if (ring) {
+                    ring.style.left = x + 'px';
+                    ring.style.top = y + 'px';
+                }
+                // تمرير القائمة إلى العنصر المحدد
+                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        });
+
+        // ================================================================
+        //  12. بدء التحميل
         // ================================================================
         async function startLoading() {
-            // نتحقق من الكاش (يمكننا استخدامه لتسريع البداية)
-            // لكننا سنعتمد على الاختبار الفعلي
-
-            // نبدأ باختبار أول 10 قنوات فقط، ثم نعرض النتائج
             const firstBatch = allChannels.slice(0, 10);
             testingIndex = 10;
             const promises = firstBatch.map(ch => quickTest(ch.url));
@@ -2211,7 +2519,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             });
             activeChannels = firstActive;
 
-            // إخفاء شاشة التحميل وعرض التطبيق
             loadingScreen.classList.add('hidden');
             mainApp.classList.add('visible');
 
@@ -2219,31 +2526,31 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             renderActiveChannels('');
             if (activeChannels.length > 0) {
                 playChannel(activeChannels[0]);
+                // محاولة التكبير التلقائي
+                setTimeout(() => {
+                    const playerArea = document.getElementById('playerArea');
+                    if (!document.fullscreenElement) {
+                        playerArea.requestFullscreen().catch(() => {});
+                    }
+                }, 1000);
             } else {
-                // لا توجد قنوات شغالة في الدفعة الأولى، نعرض رسالة
                 document.getElementById('watermarkText').textContent = '⚡ جاري البحث...';
             }
 
-            // تحديث شريط التقدم
             const percent = Math.round((testingIndex / allChannels.length) * 100);
             progressFill.style.width = percent + '%';
             progressPercent.textContent = percent + '%';
 
-            // بدء اختبار الدفعات التالية في الخلفية
             setTimeout(testNextBatch, 5000);
         }
 
         // ================================================================
-        //  12. أحداث الفيديو
+        //  13. أحداث الفيديو
         // ================================================================
-        video.addEventListener('canplay', () => {
-            // لا نحتاج لتحديث الحالة هنا لأننا نعتمد على الاختبار الدوري
-        });
-
+        video.addEventListener('canplay', () => {});
         video.addEventListener('error', (e) => {
             console.warn('فيديو خطأ، قد تكون القناة توقفت');
             if (currentChannel) {
-                // نزيل القناة من النشطة مؤقتاً، سيتم اختبارها دورياً
                 const url = currentChannel.url;
                 const index = activeChannels.findIndex(ch => ch.url === url);
                 if (index !== -1) {
@@ -2260,9 +2567,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             }
         });
 
-        // ================================================================
-        //  13. زر التكبير
-        // ================================================================
+        // زر التكبير اليدوي
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             const playerArea = document.getElementById('playerArea');
             if (!document.fullscreenElement) {
