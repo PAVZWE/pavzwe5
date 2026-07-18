@@ -60,6 +60,7 @@
             padding: 12px;
             gap: 12px;
             transition: all 0.3s;
+            position: relative;
         }
         .plasma-container.fullscreen-mode .player-area {
             flex: 1;
@@ -188,7 +189,7 @@
             white-space: nowrap;
         }
 
-        /* مؤشر الفارة */
+        /* مؤشر الفارة العملاق (زر 1) */
         .giant-cursor {
             position: fixed;
             top: 0;
@@ -260,11 +261,122 @@
         .cursor-hint.active { display: block; }
         .cursor-hint i { margin: 0 8px; }
 
+        /* ===== تراكب القنوات (زر 2) ===== */
+        .channel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 30;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 16px;
+            pointer-events: none;
+        }
+        .channel-overlay.active {
+            display: flex;
+            pointer-events: auto;
+        }
+        .channel-overlay .overlay-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e50914;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(229,9,20,0.3);
+        }
+        .channel-overlay .overlay-list {
+            width: 80%;
+            max-width: 600px;
+            max-height: 60vh;
+            overflow-y: auto;
+            background: rgba(20,20,20,0.9);
+            border-radius: 12px;
+            border: 1px solid #333;
+            padding: 8px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #e50914 transparent;
+        }
+        .channel-overlay .overlay-list::-webkit-scrollbar { width: 6px; }
+        .channel-overlay .overlay-list::-webkit-scrollbar-thumb { background: #e50914; border-radius: 10px; }
+        .channel-overlay .overlay-list::-webkit-scrollbar-track { background: transparent; }
+
+        .channel-overlay .overlay-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+            color: #ccc;
+        }
+        .channel-overlay .overlay-item:hover {
+            background: #2a2a2a;
+        }
+        .channel-overlay .overlay-item.active-item {
+            background: #1e1e1e;
+            border-left-color: #ffaa00;
+            color: #fff;
+        }
+        .channel-overlay .overlay-item img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: #222;
+            padding: 3px;
+            flex-shrink: 0;
+        }
+        .channel-overlay .overlay-item .ov-name {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .channel-overlay .overlay-item .ov-group {
+            font-size: 11px;
+            color: #777;
+            text-transform: uppercase;
+        }
+        .channel-overlay .overlay-item .ov-badge {
+            background: #2a2a2a;
+            color: #00ff88;
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 30px;
+            white-space: nowrap;
+        }
+        .channel-overlay .overlay-hint {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .channel-overlay .overlay-hint span {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #333;
+        }
+        .channel-overlay .overlay-hint i {
+            color: #ffaa00;
+        }
+
         @media (max-width: 992px) {
             .plasma-container { flex-direction: column; height: auto; padding: 8px; }
             .player-area { min-height: 250px; flex: unset; height: 45vh; }
             .channel-list { flex: unset; max-width: 100%; max-height: 350px; min-width: unset; }
             .top-bar .search-box input { width: 120px; }
+            .channel-overlay .overlay-list { width: 95%; max-height: 50vh; }
         }
         @media (max-width: 600px) {
             .top-bar { flex-direction: column; align-items: stretch; padding: 10px 15px; }
@@ -275,6 +387,8 @@
             .progress-bar-bg { width: 90%; }
             .giant-cursor .cursor-dot { width: 60px; height: 60px; }
             .giant-cursor .cursor-ring { width: 100px; height: 100px; }
+            .channel-overlay .overlay-item { padding: 8px 12px; }
+            .channel-overlay .overlay-item .ov-name { font-size: 14px; }
         }
     </style>
 </head>
@@ -307,12 +421,23 @@
                 <video id="livePlayer" controls autoplay playsinline></video>
                 <button class="fullscreen-btn" id="fullscreenBtn" title="تكبير"><i class="fas fa-expand"></i></button>
                 <div class="watermark" id="watermarkText">⚡ HD</div>
+
+                <!-- تراكب القنوات (زر 2) -->
+                <div class="channel-overlay" id="channelOverlay">
+                    <div class="overlay-title"><i class="fas fa-bars"></i> قائمة القنوات</div>
+                    <div class="overlay-list" id="overlayList"></div>
+                    <div class="overlay-hint">
+                        <span><i class="fas fa-arrow-up"></i> / <i class="fas fa-arrow-down"></i> تنقل</span>
+                        <span><i class="fas fa-check"></i> OK تشغيل</span>
+                        <span><i class="fas fa-times"></i> 2 خروج</span>
+                    </div>
+                </div>
             </div>
             <div class="channel-list" id="channelList"></div>
         </div>
     </div>
 
-    <!-- الفارة العملاقة -->
+    <!-- الفارة العملاقة (زر 1) -->
     <div class="giant-cursor" id="giantCursor">
         <div class="cursor-ring"></div>
         <div class="cursor-dot" id="cursorDot"></div>
@@ -323,7 +448,7 @@
 
     <script>
         // ================================================================
-        //  1. القنوات التركية الثابتة (من الإصدارات السابقة)
+        //  1. القنوات التركية الثابتة (من الإصدارات السابقة) - مختصرة للطول
         // ================================================================
         const turkishChannels = [
             { name: "TRT 1", logo: "https://i.ibb.co/thr6mVk/trt-1.png", url: "https://tv-trt1.medya.trt.com.tr/master_720.m3u8", group: "ULUSAL", country: "TR" },
@@ -399,7 +524,7 @@
         ];
 
         // ================================================================
-        //  2. القنوات القديمة (من pavzwe سابقاً) - مختصرة للطول
+        //  2. باقي القنوات (مختصرة جداً لضيق المساحة - سيتم تحليلها)
         // ================================================================
         const oldM3URaw = `#EXTM3U
 #EXTINF:0 tvg-country="DZ" tvg-logo="https://i.imgur.com/507piHp.png" group-title="Kids",4Kids TV
@@ -640,9 +765,6 @@ https://streaming.zagros.tv/hd/playlist.m3u8?checkedby:iptvcat.com
 https://streaming.zagros.tv/sd/playlist.m3u8?checkedby:iptvcat.com
 `;
 
-        // ================================================================
-        //  3. القنوات الجديدة (المباريات) - مختصرة
-        // ================================================================
         const newM3URaw = `#EXTINF:-1, BEIN Sport 1
 http://62.210.245.19:8000/live/testapp/testapp/81.ts
 #EXTINF:-1, BEIN Sport 2
@@ -1026,9 +1148,6 @@ http://176.31.226.149:25461/live/testest/testest/334.ts
 http://176.31.226.149:25461/live/testest/testest/342.ts
 `;
 
-        // ================================================================
-        //  4. القنوات من pavzwe.txt (القديمة) - مختصرة
-        // ================================================================
         const oldPavzweRaw = `bein sports premium 1 http://172.25.25.102:80/beinsport-HD1/index.m3u8
 bein sports premium 2 http://172.25.25.102:80/beinsport-HD2/index.m3u8
 bein sports premium 3 http://172.25.25.182:86/beinsport-HD3/index.m3u8
@@ -1249,9 +1368,6 @@ IFC Turkey http://172.25.25.182:80/IFCTurkey/index.m3u8
 ELEVEN 1 http://172.25.25.182:80/eleven1/index.m3u8
 ELEVEN 2 http://172.25.25.102:80/eleven2/index.m3u8`;
 
-        // ================================================================
-        //  5. القنوات الجديدة من pavzwe.txt (الملف الجديد) - مختصرة
-        // ================================================================
         const newPavzweRaw = `#EXTM3U
 #EXTINF:0 tvg-country="TR" tvg-logo="" group-title="Undefined",1TV GEO
 https://tv.cdn.xsg.ge/gpb-1tv/tracks-v1a1/mono.m3u8?checkedby:iptvcat.net
@@ -1978,56 +2094,30 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 if (line.startsWith('#EXTVLCOPT')) continue;
 
                 if (line.startsWith('#EXTINF')) {
-                    // استخراج tvg-logo
                     const logoMatch = line.match(/tvg-logo="([^"]*)"/);
-                    if (logoMatch && logoMatch[1]) {
-                        currentLogo = logoMatch[1];
-                    } else {
-                        currentLogo = 'https://via.placeholder.com/34/222/666?text=TV';
-                    }
-                    // استخراج tvg-country
+                    if (logoMatch && logoMatch[1]) currentLogo = logoMatch[1];
+                    else currentLogo = 'https://via.placeholder.com/34/222/666?text=TV';
                     const countryMatch = line.match(/tvg-country="([^"]*)"/);
-                    if (countryMatch && countryMatch[1]) {
-                        currentCountry = countryMatch[1].split(';')[0].trim();
-                    } else {
-                        currentCountry = 'INT';
-                    }
-                    // استخراج group-title
+                    if (countryMatch && countryMatch[1]) currentCountry = countryMatch[1].split(';')[0].trim();
+                    else currentCountry = 'INT';
                     const groupMatch = line.match(/group-title="([^"]*)"/);
-                    if (groupMatch && groupMatch[1]) {
-                        currentGroup = groupMatch[1].split(';')[0].trim();
-                    } else {
-                        currentGroup = 'عام';
-                    }
-                    // استخراج الاسم (آخر فاصلة)
+                    if (groupMatch && groupMatch[1]) currentGroup = groupMatch[1].split(';')[0].trim();
+                    else currentGroup = 'عام';
                     const nameMatch = line.match(/,([^,]+)$/);
-                    if (nameMatch) {
-                        currentName = nameMatch[1].trim();
-                    } else {
-                        currentName = 'قناة بدون اسم';
-                    }
-                    // محاولة استخراج البلد من الاسم بين قوسين
+                    if (nameMatch) currentName = nameMatch[1].trim();
+                    else currentName = 'قناة بدون اسم';
                     const parenCountry = currentName.match(/\(([A-Z]{2})\)/);
-                    if (parenCountry) {
-                        currentCountry = parenCountry[1];
-                    }
+                    if (parenCountry) currentCountry = parenCountry[1];
                     currentUrl = '';
                 } else if (line.startsWith('http://') || line.startsWith('https://')) {
                     currentUrl = line.trim();
                     if (currentName && currentUrl) {
-                        channels.push({
-                            name: currentName,
-                            logo: currentLogo,
-                            url: currentUrl,
-                            country: currentCountry,
-                            group: currentGroup
-                        });
+                        channels.push({ name: currentName, logo: currentLogo, url: currentUrl, country: currentCountry, group: currentGroup });
                         currentName = '';
                         currentLogo = 'https://via.placeholder.com/34/222/666?text=TV';
                         currentUrl = '';
                     }
                 } else {
-                    // السطر لا يبدأ بـ #EXTINF ولا برابط، ربما يكون اسم ورابط في نفس السطر (مثل pavzwe القديم)
                     const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
                     if (urlMatch) {
                         const url = urlMatch[1];
@@ -2051,14 +2141,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                             else if (/\bAR\b/.test(name) || name.startsWith('AR:')) country = 'AR';
                             else if (/iraq|aliraqia|alforat|dijla|rudaw|kurd|nrt/.test(lower)) country = 'IQ';
                             else if (/algerie|dz|echorouk|elbilad|canal|africa/.test(lower)) country = 'DZ';
-                            const logo = 'https://via.placeholder.com/34/222/666?text=TV';
-                            channels.push({
-                                name: name,
-                                logo: logo,
-                                url: url,
-                                country: country,
-                                group: group
-                            });
+                            channels.push({ name: name, logo: 'https://via.placeholder.com/34/222/666?text=TV', url: url, country: country, group: group });
                         }
                     }
                 }
@@ -2067,77 +2150,45 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         }
 
         // ================================================================
-        //  7. تحليل جميع المصادر ودمجها (مع الاحتفاظ بالتكرار)
+        //  7. دمج جميع القنوات
         // ================================================================
         const oldChannels = parseM3U(oldM3URaw);
         const newChannels = parseM3U(newM3URaw);
         const oldPavzweChannels = parseM3U(oldPavzweRaw);
         const newPavzweChannels = parseM3U(newPavzweRaw);
         const turkishWithCountry = turkishChannels.map(ch => ({ ...ch, country: 'TR' }));
-
-        // دمج الكل (تركية + قديمة + جديدة + pavzwe القديم + pavzwe الجديد)
         const allChannels = [...turkishWithCountry, ...oldChannels, ...newChannels, ...oldPavzweChannels, ...newPavzweChannels];
         console.log(`إجمالي القنوات: ${allChannels.length}`);
 
         // ================================================================
-        //  8. خريطة الدول والعرض
+        //  8. خريطة الدول
         // ================================================================
         const countryMap = {
-            'TR': '🇹🇷 تركيا',
-            'DZ': '🇩🇿 الجزائر',
-            'IQ': '🇮🇶 العراق',
-            'BH': '🇧🇭 البحرين',
-            'DJ': '🇩🇯 جيبوتي',
-            'AF': '🇦🇫 أفغانستان',
-            'AM': '🇦🇲 أرمينيا',
-            'EG': '🇪🇬 مصر',
-            'SA': '🇸🇦 السعودية',
-            'MA': '🇲🇦 المغرب',
-            'QA': '🇶🇦 قطر',
-            'OM': '🇴🇲 عمان',
-            'PS': '🇵🇸 فلسطين',
-            'YE': '🇾🇪 اليمن',
-            'KW': '🇰🇼 الكويت',
-            'AE': '🇦🇪 الإمارات',
-            'SD': '🇸🇩 السودان',
-            'FR': '🇫🇷 فرنسا',
-            'UK': '🇬🇧 بريطانيا',
-            'DE': '🇩🇪 ألمانيا',
-            'NL': '🇳🇱 هولندا',
-            'AR': '🌍 العربية',
-            'US': '🇺🇸 أمريكا',
-            'AO': '🇦🇴 أنغولا',
-            'GE': '🇬🇪 جورجيا',
-            'INT': '🌍 دول أخرى'
+            'TR':'🇹🇷 تركيا','DZ':'🇩🇿 الجزائر','IQ':'🇮🇶 العراق','BH':'🇧🇭 البحرين','DJ':'🇩🇯 جيبوتي',
+            'AF':'🇦🇫 أفغانستان','AM':'🇦🇲 أرمينيا','EG':'🇪🇬 مصر','SA':'🇸🇦 السعودية','MA':'🇲🇦 المغرب',
+            'QA':'🇶🇦 قطر','OM':'🇴🇲 عمان','PS':'🇵🇸 فلسطين','YE':'🇾🇪 اليمن','KW':'🇰🇼 الكويت',
+            'AE':'🇦🇪 الإمارات','SD':'🇸🇩 السودان','FR':'🇫🇷 فرنسا','UK':'🇬🇧 بريطانيا','DE':'🇩🇪 ألمانيا',
+            'NL':'🇳🇱 هولندا','AR':'🌍 العربية','US':'🇺🇸 أمريكا','AO':'🇦🇴 أنغولا','GE':'🇬🇪 جورجيا',
+            'INT':'🌍 دول أخرى'
         };
-
-        function getRegion(countryCode) {
-            if (!countryCode) return '🌍 دول أخرى';
-            const first = countryCode.split(';')[0].trim();
-            return countryMap[first] || `🌍 ${first}`;
-        }
+        function getRegion(c) { if (!c) return '🌍 دول أخرى'; const f=c.split(';')[0].trim(); return countryMap[f]||`🌍 ${f}`; }
 
         // ================================================================
-        //  9. اختبار سريع جداً (مهلة 1.5 ثانية)
+        //  9. اختبار سريع
         // ================================================================
         async function quickTest(url) {
             if (!url) return false;
             try {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 1500);
-                const res = await fetch(url, {
-                    method: 'HEAD',
-                    headers: { 'User-Agent': 'Mozilla/5.0' },
-                    signal: controller.signal,
-                    mode: 'cors'
-                });
+                const res = await fetch(url, { method: 'HEAD', headers: { 'User-Agent': 'Mozilla/5.0' }, signal: controller.signal, mode: 'cors' });
                 clearTimeout(timeout);
                 return res.ok || res.status === 206;
             } catch { return false; }
         }
 
         // ================================================================
-        //  10. منطق التحميل التدريجي والاختبار الدوري + التحكم عن بعد
+        //  10. العناصر والمتغيرات
         // ================================================================
         const loadingScreen = document.getElementById('loadingScreen');
         const mainApp = document.getElementById('mainApp');
@@ -2147,6 +2198,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         const container = document.getElementById('plasmaContainer');
         const topBar = document.getElementById('topBar');
         const channelList = document.getElementById('channelList');
+        const searchInput = document.getElementById('searchInput');
 
         let activeChannels = [];
         let testingIndex = 0;
@@ -2155,18 +2207,24 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         let currentChannel = null;
         let hls = null;
 
-        // متغيرات التحكم عن بعد (فارة)
+        // متغيرات الفارة (زر 1)
         let cursorActive = false;
-        let focusedIndex = 0; // فهرس القناة المحددة في قائمة activeChannels
-
-        // عناصر الفارة
+        let focusedIndex = 0;
         const giantCursor = document.getElementById('giantCursor');
         const cursorDot = document.getElementById('cursorDot');
         const cursorHint = document.getElementById('cursorHint');
 
-        // دالة العرض مع التركيز
+        // متغيرات تراكب القنوات (زر 2)
+        let overlayActive = false;
+        let overlayIndex = 0; // الفهرس في activeChannels
+        const overlay = document.getElementById('channelOverlay');
+        const overlayList = document.getElementById('overlayList');
+
+        // ================================================================
+        //  11. عرض القنوات في القائمة الجانبية (مع التركيز)
+        // ================================================================
         function renderActiveChannels(filter = '') {
-            const container = document.getElementById('channelList');
+            const container = channelList;
             container.innerHTML = '';
             const lowerFilter = filter.toLowerCase();
 
@@ -2183,108 +2241,81 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 regions[region].push(ch);
             });
 
-            const regionOrder = ['🇹🇷 تركيا', '🇩🇿 الجزائر', '🇮🇶 العراق', '🇫🇷 فرنسا', '🇬🇧 بريطانيا', '🇩🇪 ألمانيا', '🇳🇱 هولندا', '🌍 العربية'];
-            const sortedRegions = Object.keys(regions).sort((a, b) => {
-                const indexA = regionOrder.indexOf(a);
-                const indexB = regionOrder.indexOf(b);
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1) return -1;
-                if (indexB !== -1) return 1;
+            const regionOrder = ['🇹🇷 تركيا','🇩🇿 الجزائر','🇮🇶 العراق','🇫🇷 فرنسا','🇬🇧 بريطانيا','🇩🇪 ألمانيا','🇳🇱 هولندا','🌍 العربية'];
+            const sortedRegions = Object.keys(regions).sort((a,b) => {
+                const ia = regionOrder.indexOf(a), ib = regionOrder.indexOf(b);
+                if (ia!==-1 && ib!==-1) return ia-ib;
+                if (ia!==-1) return -1;
+                if (ib!==-1) return 1;
                 return a.localeCompare(b);
             });
 
-            let hasResults = false;
             let globalIndex = 0;
             sortedRegions.forEach(region => {
                 let items = regions[region];
-                if (lowerFilter) {
-                    items = items.filter(ch => ch.name.toLowerCase().includes(lowerFilter) || ch.group.toLowerCase().includes(lowerFilter));
-                }
+                if (lowerFilter) items = items.filter(ch => ch.name.toLowerCase().includes(lowerFilter) || ch.group.toLowerCase().includes(lowerFilter));
                 if (items.length === 0) return;
-                hasResults = true;
-
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'category-title';
                 titleDiv.innerHTML = `<i class="fas fa-flag"></i> ${region} <span class="count">${items.length}</span>`;
                 container.appendChild(titleDiv);
-
                 items.forEach(ch => {
                     const item = document.createElement('div');
                     item.className = 'channel-item';
                     if (currentChannel && currentChannel.url === ch.url) item.classList.add('active');
-                    // تحديد التركيز إذا كان هذا العنصر هو العنصر المحدد
-                    if (globalIndex === focusedIndex) {
-                        item.classList.add('focus');
-                    }
+                    if (globalIndex === focusedIndex) item.classList.add('focus');
                     item.setAttribute('data-index', globalIndex);
                     const logoUrl = ch.logo && ch.logo.startsWith('http') ? ch.logo : 'https://via.placeholder.com/34/222/666?text=TV';
                     item.innerHTML = `
                         <img src="${logoUrl}" alt="${ch.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/34/222/666?text=TV'">
-                        <div class="ch-info">
-                            <div class="ch-name">
-                                ${ch.name}
-                                <span class="status-dot green" title="🟢 شغال"></span>
-                            </div>
-                            <div class="ch-group">${ch.group || 'عام'}</div>
-                        </div>
+                        <div class="ch-info"><div class="ch-name">${ch.name}<span class="status-dot green" title="🟢 شغال"></span></div>
+                        <div class="ch-group">${ch.group||'عام'}</div></div>
                         <span class="ch-badge" style="color:#00ff88;">مباشر</span>
                     `;
                     item.addEventListener('click', () => {
                         playChannel(ch);
-                        // تحديث التركيز إلى هذه القناة
                         focusedIndex = globalIndex;
-                        renderActiveChannels(document.getElementById('searchInput').value);
+                        renderActiveChannels(searchInput.value);
                     });
                     container.appendChild(item);
                     globalIndex++;
                 });
             });
 
-            if (!hasResults) {
-                container.innerHTML = `<div style="padding:20px;text-align:center;color:#555;"><i class="fas fa-search" style="font-size:30px;display:block;margin-bottom:10px;"></i>لا توجد قنوات تطابق البحث</div>`;
-            }
-
-            // بعد الإعادة، إذا كانت هناك قنوات و cursorActive نعيد تركيز المؤشر
             if (cursorActive && activeChannels.length > 0) {
-                // تحديث موقع المؤشر بناءً على العنصر المحدد
                 const items = container.querySelectorAll('.channel-item');
                 if (items.length > 0 && focusedIndex < items.length) {
                     const el = items[focusedIndex];
                     el.classList.add('focus');
-                    // نحرك المؤشر إلى منتصف العنصر
                     const rect = el.getBoundingClientRect();
-                    const x = rect.left + rect.width / 2;
-                    const y = rect.top + rect.height / 2;
+                    const x = rect.left + rect.width/2, y = rect.top + rect.height/2;
                     cursorDot.style.left = x + 'px';
                     cursorDot.style.top = y + 'px';
                     const ring = document.querySelector('.giant-cursor .cursor-ring');
-                    if (ring) {
-                        ring.style.left = x + 'px';
-                        ring.style.top = y + 'px';
-                    }
+                    if (ring) { ring.style.left = x + 'px'; ring.style.top = y + 'px'; }
                 }
             }
         }
 
-        // دالة تشغيل قناة
+        // ================================================================
+        //  12. تشغيل القناة
+        // ================================================================
         function initHLS(url) {
             if (hls) { hls.destroy(); hls = null; }
             if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = url;
-                video.play().catch(() => {});
+                video.play().catch(()=>{});
                 return;
             }
             if (Hls.isSupported()) {
                 hls = new Hls({ enableWorker: true, lowLatencyMode: true });
                 hls.loadSource(url);
                 hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
-                hls.on(Hls.Events.ERROR, (e, data) => {
-                    if (data.fatal) { hls.loadSource(url); }
-                });
+                hls.on(Hls.Events.MANIFEST_PARSED, ()=>{ video.play().catch(()=>{}); });
+                hls.on(Hls.Events.ERROR, (e,data) => { if (data.fatal) hls.loadSource(url); });
             } else {
                 video.src = url;
-                video.play().catch(() => {});
+                video.play().catch(()=>{});
             }
         }
 
@@ -2297,31 +2328,231 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 if (activeItem) activeItem.classList.add('active');
                 document.title = `${channel.name} - بلازما TV`;
                 document.getElementById('watermarkText').textContent = `${channel.name} ⚡ HD`;
-                // التأكد من أن الفيديو في وضع ملء الشاشة إذا لم يكن كذلك
+                // إغلاق التراكب إن كان مفتوحاً
+                if (overlayActive) toggleOverlay();
+                // تكبير تلقائي
                 if (!document.fullscreenElement && !container.classList.contains('fullscreen-mode')) {
-                    // محاولة التكبير التلقائي
-                    const playerArea = document.getElementById('playerArea');
-                    playerArea.requestFullscreen().catch(() => {});
+                    document.getElementById('playerArea').requestFullscreen().catch(()=>{});
                 }
             }
         }
 
-        // دالة اختبار مجموعة من القنوات
-        async function testBatch(channelsBatch) {
-            const promises = channelsBatch.map(ch => quickTest(ch.url));
+        // ================================================================
+        //  13. التراكب (زر 2)
+        // ================================================================
+        function renderOverlay() {
+            overlayList.innerHTML = '';
+            if (activeChannels.length === 0) {
+                overlayList.innerHTML = `<div style="padding:20px;text-align:center;color:#666;">لا توجد قنوات شغالة</div>`;
+                return;
+            }
+            activeChannels.forEach((ch, idx) => {
+                const div = document.createElement('div');
+                div.className = 'overlay-item' + (idx === overlayIndex ? ' active-item' : '');
+                const logoUrl = ch.logo && ch.logo.startsWith('http') ? ch.logo : 'https://via.placeholder.com/36/222/666?text=TV';
+                div.innerHTML = `
+                    <img src="${logoUrl}" onerror="this.src='https://via.placeholder.com/36/222/666?text=TV'">
+                    <span class="ov-name">${ch.name}</span>
+                    <span class="ov-group">${ch.group||'عام'}</span>
+                    <span class="ov-badge">مباشر</span>
+                `;
+                div.addEventListener('click', () => {
+                    overlayIndex = idx;
+                    playChannel(ch);
+                    renderOverlay();
+                });
+                overlayList.appendChild(div);
+            });
+            // تمرير إلى العنصر المحدد
+            const items = overlayList.querySelectorAll('.overlay-item');
+            if (items.length > 0 && overlayIndex < items.length) {
+                items[overlayIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
+        function toggleOverlay() {
+            overlayActive = !overlayActive;
+            if (overlayActive) {
+                overlay.classList.add('active');
+                // إخفاء الشريط العلوي والقائمة الجانبية لتوسيع الفيديو
+                topBar.classList.add('hidden');
+                channelList.classList.add('hidden');
+                container.classList.add('fullscreen-mode');
+                // تحديث الفهرس إذا لزم الأمر
+                if (activeChannels.length > 0) {
+                    // ابحث عن القناة الحالية في list
+                    if (currentChannel) {
+                        const idx = activeChannels.findIndex(ch => ch.url === currentChannel.url);
+                        if (idx !== -1) overlayIndex = idx;
+                    } else {
+                        overlayIndex = 0;
+                    }
+                }
+                renderOverlay();
+                // إظهار رسالة
+                document.getElementById('watermarkText').textContent = '📡 قائمة القنوات';
+            } else {
+                overlay.classList.remove('active');
+                topBar.classList.remove('hidden');
+                channelList.classList.remove('hidden');
+                container.classList.remove('fullscreen-mode');
+                if (currentChannel) {
+                    document.getElementById('watermarkText').textContent = `${currentChannel.name} ⚡ HD`;
+                } else {
+                    document.getElementById('watermarkText').textContent = '⚡ HD';
+                }
+                // إعادة عرض القنوات الجانبية
+                renderActiveChannels(searchInput.value);
+            }
+        }
+
+        // التنقل في التراكب بالأسهم
+        function navigateOverlay(direction) {
+            if (!overlayActive || activeChannels.length === 0) return;
+            let newIdx = overlayIndex + direction;
+            if (newIdx < 0) newIdx = activeChannels.length - 1;
+            if (newIdx >= activeChannels.length) newIdx = 0;
+            overlayIndex = newIdx;
+            renderOverlay();
+        }
+
+        // تشغيل القناة المحددة في التراكب
+        function playSelectedOverlay() {
+            if (!overlayActive || activeChannels.length === 0) return;
+            if (overlayIndex < activeChannels.length) {
+                playChannel(activeChannels[overlayIndex]);
+                toggleOverlay(); // إغلاق التراكب بعد التشغيل
+            }
+        }
+
+        // ================================================================
+        //  14. الفارة (زر 1)
+        // ================================================================
+        function toggleCursor() {
+            cursorActive = !cursorActive;
+            if (cursorActive) {
+                giantCursor.classList.add('active');
+                cursorHint.classList.add('active');
+                topBar.classList.add('hidden');
+                container.classList.add('fullscreen-mode');
+                // إغلاق التراكب إن كان مفتوحاً
+                if (overlayActive) toggleOverlay();
+                if (activeChannels.length > 0) {
+                    focusedIndex = 0;
+                    renderActiveChannels(searchInput.value);
+                }
+                document.body.style.cursor = 'none';
+            } else {
+                giantCursor.classList.remove('active');
+                cursorHint.classList.remove('active');
+                topBar.classList.remove('hidden');
+                container.classList.remove('fullscreen-mode');
+                document.body.style.cursor = 'default';
+                document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('focus'));
+            }
+        }
+
+        // ================================================================
+        //  15. أحداث لوحة المفاتيح
+        // ================================================================
+        document.addEventListener('keydown', (e) => {
+            // زر 1: الفارة
+            if (e.key === '1' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                e.preventDefault();
+                // إذا كان التراكب مفتوحاً نغلقه أولاً
+                if (overlayActive) toggleOverlay();
+                toggleCursor();
+                return;
+            }
+            // زر 2: تراكب القنوات
+            if (e.key === '2' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                e.preventDefault();
+                // إذا كانت الفارة نشطة نوقفها
+                if (cursorActive) toggleCursor();
+                toggleOverlay();
+                return;
+            }
+
+            // إذا كان التراكب نشطاً نتعامل معه
+            if (overlayActive) {
+                switch (e.key) {
+                    case 'ArrowUp': case 'ArrowDown':
+                        e.preventDefault();
+                        navigateOverlay(e.key === 'ArrowUp' ? -1 : 1);
+                        break;
+                    case 'Enter': case ' ':
+                        e.preventDefault();
+                        playSelectedOverlay();
+                        break;
+                    case 'Escape':
+                        toggleOverlay();
+                        break;
+                }
+                return;
+            }
+
+            // إذا كانت الفارة نشطة
+            if (cursorActive) {
+                const items = channelList.querySelectorAll('.channel-item');
+                if (items.length === 0) return;
+                let newIndex = focusedIndex;
+                switch (e.key) {
+                    case 'ArrowDown': case 'ArrowRight':
+                        e.preventDefault();
+                        newIndex = Math.min(items.length - 1, focusedIndex + 1);
+                        break;
+                    case 'ArrowUp': case 'ArrowLeft':
+                        e.preventDefault();
+                        newIndex = Math.max(0, focusedIndex - 1);
+                        break;
+                    case 'Enter': case ' ':
+                        e.preventDefault();
+                        const targetItem = items[focusedIndex];
+                        if (targetItem) {
+                            const idx = parseInt(targetItem.getAttribute('data-index'));
+                            if (!isNaN(idx) && idx < activeChannels.length) {
+                                playChannel(activeChannels[idx]);
+                                document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+                                targetItem.classList.add('active');
+                                // إلغاء وضع الفارة بعد الاختيار (اختياري)
+                                // toggleCursor();
+                            }
+                        }
+                        return;
+                    default:
+                        return;
+                }
+                if (newIndex !== focusedIndex) {
+                    focusedIndex = newIndex;
+                    // تحديث التركيز وعرضه
+                    renderActiveChannels(searchInput.value);
+                }
+                return;
+            }
+
+            // إضافة اختصار للتكبير (F)
+            if (e.key === 'f' || e.key === 'F') {
+                const playerArea = document.getElementById('playerArea');
+                if (!document.fullscreenElement) {
+                    playerArea.requestFullscreen().catch(()=>{});
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+        });
+
+        // ================================================================
+        //  16. اختبار القنوات وتحميلها
+        // ================================================================
+        async function testBatch(batch) {
+            const promises = batch.map(ch => quickTest(ch.url));
             const results = await Promise.all(promises);
             const newActive = [];
-            channelsBatch.forEach((ch, idx) => {
-                if (results[idx]) {
-                    newActive.push(ch);
-                }
-            });
+            batch.forEach((ch, idx) => { if (results[idx]) newActive.push(ch); });
             if (newActive.length > 0) {
                 activeChannels = [...activeChannels, ...newActive];
-                renderActiveChannels(document.getElementById('searchInput').value);
-                if (!currentChannel && newActive.length > 0) {
-                    playChannel(newActive[0]);
-                }
+                renderActiveChannels(searchInput.value);
+                if (!currentChannel && newActive.length > 0) playChannel(newActive[0]);
             }
             const tested = Math.min(testingIndex, allChannels.length);
             const percent = Math.round((tested / allChannels.length) * 100);
@@ -2331,21 +2562,14 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
 
         async function testNextBatch() {
             if (testingIndex >= allChannels.length) {
-                if (!isTestingComplete) {
-                    isTestingComplete = true;
-                    startPeriodicTesting();
-                }
+                if (!isTestingComplete) { isTestingComplete = true; startPeriodicTesting(); }
                 return;
             }
             const batch = allChannels.slice(testingIndex, testingIndex + 10);
             testingIndex += batch.length;
             await testBatch(batch);
-            if (testingIndex < allChannels.length) {
-                setTimeout(testNextBatch, 5000);
-            } else {
-                isTestingComplete = true;
-                startPeriodicTesting();
-            }
+            if (testingIndex < allChannels.length) setTimeout(testNextBatch, 5000);
+            else { isTestingComplete = true; startPeriodicTesting(); }
         }
 
         function startPeriodicTesting() {
@@ -2358,228 +2582,72 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 const failed = [];
                 const stillActive = [];
                 toTest.forEach((ch, idx) => {
-                    if (results[idx]) {
-                        stillActive.push(ch);
-                    } else {
-                        failed.push(ch);
-                    }
+                    if (results[idx]) stillActive.push(ch);
+                    else failed.push(ch);
                 });
                 if (failed.length > 0) {
                     const failedUrls = new Set(failed.map(ch => ch.url));
                     activeChannels = activeChannels.filter(ch => !failedUrls.has(ch.url));
-                    renderActiveChannels(document.getElementById('searchInput').value);
+                    renderActiveChannels(searchInput.value);
                     if (currentChannel && failedUrls.has(currentChannel.url)) {
-                        const nextChannel = activeChannels.length > 0 ? activeChannels[0] : null;
-                        if (nextChannel) {
-                            playChannel(nextChannel);
-                        } else {
-                            video.pause();
-                            currentChannel = null;
-                            document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات';
-                        }
+                        const next = activeChannels.length > 0 ? activeChannels[0] : null;
+                        if (next) playChannel(next);
+                        else { video.pause(); currentChannel = null; document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات'; }
                     }
-                    // إذا كان المؤشر خارج النطاق، نعدله
-                    if (focusedIndex >= activeChannels.length) {
-                        focusedIndex = Math.max(0, activeChannels.length - 1);
-                        if (cursorActive) renderActiveChannels(document.getElementById('searchInput').value);
-                    }
+                    if (focusedIndex >= activeChannels.length) focusedIndex = Math.max(0, activeChannels.length - 1);
                 }
             }, 5000);
         }
 
-        function filterChannels() {
-            renderActiveChannels(document.getElementById('searchInput').value);
-        }
-
-        // ================================================================
-        //  11. التحكم عن بعد (الفارة + أزرار التلفزيون)
-        // ================================================================
-        function toggleCursor() {
-            cursorActive = !cursorActive;
-            if (cursorActive) {
-                giantCursor.classList.add('active');
-                cursorHint.classList.add('active');
-                // إخفاء شريط البحث العلوي لتوسيع العرض
-                topBar.classList.add('hidden');
-                container.classList.add('fullscreen-mode');
-                // نبدأ بتركيز أول قناة
-                if (activeChannels.length > 0) {
-                    focusedIndex = 0;
-                    renderActiveChannels(document.getElementById('searchInput').value);
-                    // وضع المؤشر على أول قناة
-                    const items = channelList.querySelectorAll('.channel-item');
-                    if (items.length > 0) {
-                        const rect = items[0].getBoundingClientRect();
-                        const x = rect.left + rect.width / 2;
-                        const y = rect.top + rect.height / 2;
-                        cursorDot.style.left = x + 'px';
-                        cursorDot.style.top = y + 'px';
-                        const ring = document.querySelector('.giant-cursor .cursor-ring');
-                        if (ring) {
-                            ring.style.left = x + 'px';
-                            ring.style.top = y + 'px';
-                        }
-                    }
-                }
-                // تعطيل مؤشر الماوس العادي
-                document.body.style.cursor = 'none';
-            } else {
-                giantCursor.classList.remove('active');
-                cursorHint.classList.remove('active');
-                topBar.classList.remove('hidden');
-                container.classList.remove('fullscreen-mode');
-                document.body.style.cursor = 'default';
-                // إزالة التركيز
-                document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('focus'));
-            }
-        }
-
-        // حدث لوحة المفاتيح للتحكم عن بعد
-        document.addEventListener('keydown', (e) => {
-            // زر الفاره: نستخدم زر "1" لتفعيل/إلغاء الفارة
-            if (e.key === '1' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                e.preventDefault();
-                toggleCursor();
-                return;
-            }
-
-            if (!cursorActive) return;
-
-            const items = channelList.querySelectorAll('.channel-item');
-            if (items.length === 0) return;
-
-            let newIndex = focusedIndex;
-
-            switch (e.key) {
-                case 'ArrowDown':
-                case 'ArrowRight':
-                    e.preventDefault();
-                    newIndex = Math.min(items.length - 1, focusedIndex + 1);
-                    break;
-                case 'ArrowUp':
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    newIndex = Math.max(0, focusedIndex - 1);
-                    break;
-                case 'Enter':
-                case ' ':
-                    e.preventDefault();
-                    // تشغيل القناة المحددة
-                    const targetItem = items[focusedIndex];
-                    if (targetItem) {
-                        const idx = parseInt(targetItem.getAttribute('data-index'));
-                        if (!isNaN(idx) && idx < activeChannels.length) {
-                            playChannel(activeChannels[idx]);
-                            // تحديث التظليل
-                            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
-                            targetItem.classList.add('active');
-                        }
-                    }
-                    return;
-                default:
-                    return;
-            }
-
-            if (newIndex !== focusedIndex) {
-                focusedIndex = newIndex;
-                // تحديث التركيز
-                items.forEach((el, i) => {
-                    el.classList.toggle('focus', i === focusedIndex);
-                });
-                // تحديث موقع المؤشر
-                const el = items[focusedIndex];
-                const rect = el.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top + rect.height / 2;
-                cursorDot.style.left = x + 'px';
-                cursorDot.style.top = y + 'px';
-                const ring = document.querySelector('.giant-cursor .cursor-ring');
-                if (ring) {
-                    ring.style.left = x + 'px';
-                    ring.style.top = y + 'px';
-                }
-                // تمرير القائمة إلى العنصر المحدد
-                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
-        });
-
-        // ================================================================
-        //  12. بدء التحميل
-        // ================================================================
         async function startLoading() {
             const firstBatch = allChannels.slice(0, 10);
             testingIndex = 10;
-            const promises = firstBatch.map(ch => quickTest(ch.url));
-            const results = await Promise.all(promises);
-            const firstActive = [];
-            firstBatch.forEach((ch, idx) => {
-                if (results[idx]) {
-                    firstActive.push(ch);
-                }
-            });
-            activeChannels = firstActive;
-
+            const results = await Promise.all(firstBatch.map(ch => quickTest(ch.url)));
+            firstBatch.forEach((ch, idx) => { if (results[idx]) activeChannels.push(ch); });
             loadingScreen.classList.add('hidden');
             mainApp.classList.add('visible');
-
-            // عرض القنوات النشطة الأولى
             renderActiveChannels('');
             if (activeChannels.length > 0) {
                 playChannel(activeChannels[0]);
-                // محاولة التكبير التلقائي
                 setTimeout(() => {
                     const playerArea = document.getElementById('playerArea');
-                    if (!document.fullscreenElement) {
-                        playerArea.requestFullscreen().catch(() => {});
-                    }
+                    if (!document.fullscreenElement) playerArea.requestFullscreen().catch(()=>{});
                 }, 1000);
             } else {
                 document.getElementById('watermarkText').textContent = '⚡ جاري البحث...';
             }
-
             const percent = Math.round((testingIndex / allChannels.length) * 100);
             progressFill.style.width = percent + '%';
             progressPercent.textContent = percent + '%';
-
             setTimeout(testNextBatch, 5000);
         }
 
-        // ================================================================
-        //  13. أحداث الفيديو
-        // ================================================================
-        video.addEventListener('canplay', () => {});
+        // أحداث الفيديو
         video.addEventListener('error', (e) => {
-            console.warn('فيديو خطأ، قد تكون القناة توقفت');
+            console.warn('فيديو خطأ');
             if (currentChannel) {
                 const url = currentChannel.url;
-                const index = activeChannels.findIndex(ch => ch.url === url);
-                if (index !== -1) {
-                    activeChannels.splice(index, 1);
-                    renderActiveChannels(document.getElementById('searchInput').value);
-                    if (activeChannels.length > 0) {
-                        playChannel(activeChannels[0]);
-                    } else {
-                        video.pause();
-                        currentChannel = null;
-                        document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات شغالة';
-                    }
+                const idx = activeChannels.findIndex(ch => ch.url === url);
+                if (idx !== -1) {
+                    activeChannels.splice(idx, 1);
+                    renderActiveChannels(searchInput.value);
+                    if (activeChannels.length > 0) playChannel(activeChannels[0]);
+                    else { video.pause(); currentChannel = null; document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات شغالة'; }
                 }
             }
         });
 
-        // زر التكبير اليدوي
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             const playerArea = document.getElementById('playerArea');
-            if (!document.fullscreenElement) {
-                playerArea.requestFullscreen().catch(() => {});
-            } else {
-                document.exitFullscreen();
-            }
+            if (!document.fullscreenElement) playerArea.requestFullscreen().catch(()=>{});
+            else document.exitFullscreen();
         });
 
-        // ================================================================
-        //  14. بدء التشغيل
-        // ================================================================
+        // دالة البحث
+        window.filterChannels = function() {
+            renderActiveChannels(searchInput.value);
+        };
+
         window.addEventListener('DOMContentLoaded', startLoading);
     </script>
 </body>
