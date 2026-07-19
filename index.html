@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -2158,7 +2159,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         const newPavzweChannels = parseM3U(newPavzweRaw);
         const turkishWithCountry = turkishChannels.map(ch => ({ ...ch, country: 'TR' }));
         const allChannels = [...turkishWithCountry, ...oldChannels, ...newChannels, ...oldPavzweChannels, ...newPavzweChannels];
-        console.log(`إجمالي القنوات: ${allChannels.length}`);
 
         // ================================================================
         //  8. خريطة الدول
@@ -2188,7 +2188,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         }
 
         // ================================================================
-        //  10. العناصر والمتغيرات
+        //  10. العناصر والمتغيرات الأساسية
         // ================================================================
         const loadingScreen = document.getElementById('loadingScreen');
         const mainApp = document.getElementById('mainApp');
@@ -2207,21 +2207,52 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         let currentChannel = null;
         let hls = null;
 
-        // متغيرات الفارة (زر 1)
-        let cursorActive = false;
+        // مؤشر القناة المحددة للفارة والتراكب
         let focusedIndex = 0;
+        let overlayActive = false;
+        let overlayIndex = 0;
+        let cursorActive = false;
         const giantCursor = document.getElementById('giantCursor');
         const cursorDot = document.getElementById('cursorDot');
         const cursorHint = document.getElementById('cursorHint');
-
-        // متغيرات تراكب القنوات (زر 2)
-        let overlayActive = false;
-        let overlayIndex = 0; // الفهرس في activeChannels
         const overlay = document.getElementById('channelOverlay');
         const overlayList = document.getElementById('overlayList');
 
+        // مفتاح التخزين المحلي
+        const STORAGE_KEY = 'plazma_active_channels_v2';
+
         // ================================================================
-        //  11. عرض القنوات في القائمة الجانبية (مع التركيز)
+        //  11. دوال التخزين المحلي
+        // ================================================================
+        function saveActiveChannels() {
+            try {
+                // نختزل البيانات لتوفير المساحة: نحتفظ بالاسم، الشعار، الرابط، الدولة، المجموعة
+                const data = activeChannels.map(ch => ({
+                    name: ch.name,
+                    logo: ch.logo,
+                    url: ch.url,
+                    country: ch.country,
+                    group: ch.group
+                }));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({ timestamp: Date.now(), channels: data }));
+            } catch (e) { /* تجاهل أخطاء التخزين */ }
+        }
+
+        function loadActiveChannels() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return null;
+                const data = JSON.parse(raw);
+                // نتحقق من صلاحية الكاش (24 ساعة)
+                if (data && data.timestamp && (Date.now() - data.timestamp < 24 * 60 * 60 * 1000)) {
+                    return data.channels;
+                }
+                return null;
+            } catch { return null; }
+        }
+
+        // ================================================================
+        //  12. عرض القنوات (القائمة الجانبية + التراكب)
         // ================================================================
         function renderActiveChannels(filter = '') {
             const container = channelList;
@@ -2297,8 +2328,37 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             }
         }
 
+        function renderOverlay() {
+            overlayList.innerHTML = '';
+            if (activeChannels.length === 0) {
+                overlayList.innerHTML = `<div style="padding:20px;text-align:center;color:#666;">لا توجد قنوات شغالة</div>`;
+                return;
+            }
+            activeChannels.forEach((ch, idx) => {
+                const div = document.createElement('div');
+                div.className = 'overlay-item' + (idx === overlayIndex ? ' active-item' : '');
+                const logoUrl = ch.logo && ch.logo.startsWith('http') ? ch.logo : 'https://via.placeholder.com/36/222/666?text=TV';
+                div.innerHTML = `
+                    <img src="${logoUrl}" onerror="this.src='https://via.placeholder.com/36/222/666?text=TV'">
+                    <span class="ov-name">${ch.name}</span>
+                    <span class="ov-group">${ch.group||'عام'}</span>
+                    <span class="ov-badge">مباشر</span>
+                `;
+                div.addEventListener('click', () => {
+                    overlayIndex = idx;
+                    playChannel(ch);
+                    renderOverlay();
+                });
+                overlayList.appendChild(div);
+            });
+            const items = overlayList.querySelectorAll('.overlay-item');
+            if (items.length > 0 && overlayIndex < items.length) {
+                items[overlayIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
         // ================================================================
-        //  12. تشغيل القناة
+        //  13. تشغيل القناة
         // ================================================================
         function initHLS(url) {
             if (hls) { hls.destroy(); hls = null; }
@@ -2328,9 +2388,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 if (activeItem) activeItem.classList.add('active');
                 document.title = `${channel.name} - بلازما TV`;
                 document.getElementById('watermarkText').textContent = `${channel.name} ⚡ HD`;
-                // إغلاق التراكب إن كان مفتوحاً
                 if (overlayActive) toggleOverlay();
-                // تكبير تلقائي
                 if (!document.fullscreenElement && !container.classList.contains('fullscreen-mode')) {
                     document.getElementById('playerArea').requestFullscreen().catch(()=>{});
                 }
@@ -2338,75 +2396,34 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
         }
 
         // ================================================================
-        //  13. التراكب (زر 2)
+        //  14. التراكب (زر 2) والفارة (زر 1)
         // ================================================================
-        function renderOverlay() {
-            overlayList.innerHTML = '';
-            if (activeChannels.length === 0) {
-                overlayList.innerHTML = `<div style="padding:20px;text-align:center;color:#666;">لا توجد قنوات شغالة</div>`;
-                return;
-            }
-            activeChannels.forEach((ch, idx) => {
-                const div = document.createElement('div');
-                div.className = 'overlay-item' + (idx === overlayIndex ? ' active-item' : '');
-                const logoUrl = ch.logo && ch.logo.startsWith('http') ? ch.logo : 'https://via.placeholder.com/36/222/666?text=TV';
-                div.innerHTML = `
-                    <img src="${logoUrl}" onerror="this.src='https://via.placeholder.com/36/222/666?text=TV'">
-                    <span class="ov-name">${ch.name}</span>
-                    <span class="ov-group">${ch.group||'عام'}</span>
-                    <span class="ov-badge">مباشر</span>
-                `;
-                div.addEventListener('click', () => {
-                    overlayIndex = idx;
-                    playChannel(ch);
-                    renderOverlay();
-                });
-                overlayList.appendChild(div);
-            });
-            // تمرير إلى العنصر المحدد
-            const items = overlayList.querySelectorAll('.overlay-item');
-            if (items.length > 0 && overlayIndex < items.length) {
-                items[overlayIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
-        }
-
         function toggleOverlay() {
             overlayActive = !overlayActive;
             if (overlayActive) {
                 overlay.classList.add('active');
-                // إخفاء الشريط العلوي والقائمة الجانبية لتوسيع الفيديو
                 topBar.classList.add('hidden');
                 channelList.classList.add('hidden');
                 container.classList.add('fullscreen-mode');
-                // تحديث الفهرس إذا لزم الأمر
                 if (activeChannels.length > 0) {
-                    // ابحث عن القناة الحالية في list
                     if (currentChannel) {
                         const idx = activeChannels.findIndex(ch => ch.url === currentChannel.url);
                         if (idx !== -1) overlayIndex = idx;
-                    } else {
-                        overlayIndex = 0;
-                    }
+                    } else overlayIndex = 0;
                 }
                 renderOverlay();
-                // إظهار رسالة
                 document.getElementById('watermarkText').textContent = '📡 قائمة القنوات';
             } else {
                 overlay.classList.remove('active');
                 topBar.classList.remove('hidden');
                 channelList.classList.remove('hidden');
                 container.classList.remove('fullscreen-mode');
-                if (currentChannel) {
-                    document.getElementById('watermarkText').textContent = `${currentChannel.name} ⚡ HD`;
-                } else {
-                    document.getElementById('watermarkText').textContent = '⚡ HD';
-                }
-                // إعادة عرض القنوات الجانبية
+                if (currentChannel) document.getElementById('watermarkText').textContent = `${currentChannel.name} ⚡ HD`;
+                else document.getElementById('watermarkText').textContent = '⚡ HD';
                 renderActiveChannels(searchInput.value);
             }
         }
 
-        // التنقل في التراكب بالأسهم
         function navigateOverlay(direction) {
             if (!overlayActive || activeChannels.length === 0) return;
             let newIdx = overlayIndex + direction;
@@ -2416,18 +2433,14 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             renderOverlay();
         }
 
-        // تشغيل القناة المحددة في التراكب
         function playSelectedOverlay() {
             if (!overlayActive || activeChannels.length === 0) return;
             if (overlayIndex < activeChannels.length) {
                 playChannel(activeChannels[overlayIndex]);
-                toggleOverlay(); // إغلاق التراكب بعد التشغيل
+                toggleOverlay();
             }
         }
 
-        // ================================================================
-        //  14. الفارة (زر 1)
-        // ================================================================
         function toggleCursor() {
             cursorActive = !cursorActive;
             if (cursorActive) {
@@ -2435,7 +2448,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 cursorHint.classList.add('active');
                 topBar.classList.add('hidden');
                 container.classList.add('fullscreen-mode');
-                // إغلاق التراكب إن كان مفتوحاً
                 if (overlayActive) toggleOverlay();
                 if (activeChannels.length > 0) {
                     focusedIndex = 0;
@@ -2459,7 +2471,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             // زر 1: الفارة
             if (e.key === '1' && !e.ctrlKey && !e.altKey && !e.metaKey) {
                 e.preventDefault();
-                // إذا كان التراكب مفتوحاً نغلقه أولاً
                 if (overlayActive) toggleOverlay();
                 toggleCursor();
                 return;
@@ -2467,13 +2478,11 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             // زر 2: تراكب القنوات
             if (e.key === '2' && !e.ctrlKey && !e.altKey && !e.metaKey) {
                 e.preventDefault();
-                // إذا كانت الفارة نشطة نوقفها
                 if (cursorActive) toggleCursor();
                 toggleOverlay();
                 return;
             }
 
-            // إذا كان التراكب نشطاً نتعامل معه
             if (overlayActive) {
                 switch (e.key) {
                     case 'ArrowUp': case 'ArrowDown':
@@ -2491,7 +2500,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 return;
             }
 
-            // إذا كانت الفارة نشطة
             if (cursorActive) {
                 const items = channelList.querySelectorAll('.channel-item');
                 if (items.length === 0) return;
@@ -2514,8 +2522,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                                 playChannel(activeChannels[idx]);
                                 document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
                                 targetItem.classList.add('active');
-                                // إلغاء وضع الفارة بعد الاختيار (اختياري)
-                                // toggleCursor();
                             }
                         }
                         return;
@@ -2524,25 +2530,21 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                 }
                 if (newIndex !== focusedIndex) {
                     focusedIndex = newIndex;
-                    // تحديث التركيز وعرضه
                     renderActiveChannels(searchInput.value);
                 }
                 return;
             }
 
-            // إضافة اختصار للتكبير (F)
+            // تكبير (F)
             if (e.key === 'f' || e.key === 'F') {
                 const playerArea = document.getElementById('playerArea');
-                if (!document.fullscreenElement) {
-                    playerArea.requestFullscreen().catch(()=>{});
-                } else {
-                    document.exitFullscreen();
-                }
+                if (!document.fullscreenElement) playerArea.requestFullscreen().catch(()=>{});
+                else document.exitFullscreen();
             }
         });
 
         // ================================================================
-        //  16. اختبار القنوات وتحميلها
+        //  16. اختبار القنوات وتحميلها مع التخزين المحلي
         // ================================================================
         async function testBatch(batch) {
             const promises = batch.map(ch => quickTest(ch.url));
@@ -2550,9 +2552,14 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             const newActive = [];
             batch.forEach((ch, idx) => { if (results[idx]) newActive.push(ch); });
             if (newActive.length > 0) {
-                activeChannels = [...activeChannels, ...newActive];
+                // دمج القنوات الجديدة مع الحالية مع تجنب التكرار (حسب الرابط)
+                const existingUrls = new Set(activeChannels.map(ch => ch.url));
+                const toAdd = newActive.filter(ch => !existingUrls.has(ch.url));
+                activeChannels = [...activeChannels, ...toAdd];
                 renderActiveChannels(searchInput.value);
                 if (!currentChannel && newActive.length > 0) playChannel(newActive[0]);
+                // حفظ في التخزين المحلي
+                saveActiveChannels();
             }
             const tested = Math.min(testingIndex, allChannels.length);
             const percent = Math.round((tested / allChannels.length) * 100);
@@ -2576,6 +2583,8 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             if (periodicTimer) clearInterval(periodicTimer);
             periodicTimer = setInterval(async () => {
                 if (activeChannels.length === 0) return;
+                // نختبر فقط القنوات التي لم يتم اختبارها مؤخراً (نستخدم كاش الوقت)
+                // لكننا سنختبر جميع القنوات بشكل دوري.
                 const toTest = [...activeChannels];
                 const promises = toTest.map(ch => quickTest(ch.url));
                 const results = await Promise.all(promises);
@@ -2589,6 +2598,7 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                     const failedUrls = new Set(failed.map(ch => ch.url));
                     activeChannels = activeChannels.filter(ch => !failedUrls.has(ch.url));
                     renderActiveChannels(searchInput.value);
+                    saveActiveChannels();
                     if (currentChannel && failedUrls.has(currentChannel.url)) {
                         const next = activeChannels.length > 0 ? activeChannels[0] : null;
                         if (next) playChannel(next);
@@ -2596,14 +2606,91 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
                     }
                     if (focusedIndex >= activeChannels.length) focusedIndex = Math.max(0, activeChannels.length - 1);
                 }
-            }, 5000);
+            }, 30000); // اختبار كل 30 ثانية بدلاً من 5 ثوانٍ لتقليل الضغط
         }
 
+        // ================================================================
+        //  17. بدء التحميل
+        // ================================================================
         async function startLoading() {
+            // 1. محاولة تحميل القنوات من التخزين المحلي أولاً
+            const stored = loadActiveChannels();
+            if (stored && stored.length > 0) {
+                // تحويل البيانات المخزنة إلى كائنات قنوات كاملة
+                activeChannels = stored;
+                loadingScreen.classList.add('hidden');
+                mainApp.classList.add('visible');
+                renderActiveChannels('');
+                if (activeChannels.length > 0) {
+                    playChannel(activeChannels[0]);
+                    setTimeout(() => {
+                        const playerArea = document.getElementById('playerArea');
+                        if (!document.fullscreenElement) playerArea.requestFullscreen().catch(()=>{});
+                    }, 1000);
+                } else {
+                    document.getElementById('watermarkText').textContent = '⚡ جاري البحث...';
+                }
+                // استمرار الفحص للتأكد من أن القنوات لا تزال شغالة وإضافة قنوات جديدة
+                testingIndex = 0; // لا نعيد فحص القنوات المخزنة بل نبدأ من حيث انتهينا
+                // نحدد القنوات التي لدينا بالفعل
+                const storedUrls = new Set(activeChannels.map(ch => ch.url));
+                // نبحث عن قنوات جديدة غير مخزنة
+                const newChannelsToTest = allChannels.filter(ch => !storedUrls.has(ch.url));
+                // نعيد ترتيب testingIndex لفحص القنوات الجديدة فقط
+                // لكننا سنقوم بفحص جميع القنوات الجديدة على دفعات
+                if (newChannelsToTest.length > 0) {
+                    testingIndex = 0;
+                    // ندمج القنوات الجديدة مع المخزنة
+                    // نبدأ باختبار القنوات الجديدة
+                    const firstNewBatch = newChannelsToTest.slice(0, 10);
+                    testingIndex = 10;
+                    const results = await Promise.all(firstNewBatch.map(ch => quickTest(ch.url)));
+                    const newActive = [];
+                    firstNewBatch.forEach((ch, idx) => { if (results[idx]) newActive.push(ch); });
+                    if (newActive.length > 0) {
+                        const existingUrls = new Set(activeChannels.map(ch => ch.url));
+                        const toAdd = newActive.filter(ch => !existingUrls.has(ch.url));
+                        activeChannels = [...activeChannels, ...toAdd];
+                        renderActiveChannels(searchInput.value);
+                        saveActiveChannels();
+                        if (!currentChannel && newActive.length > 0) playChannel(newActive[0]);
+                    }
+                    // نستمر في اختبار الباقي
+                    const remainingNew = newChannelsToTest.slice(10);
+                    for (let i = 0; i < remainingNew.length; i += 10) {
+                        const batch = remainingNew.slice(i, i + 10);
+                        const batchResults = await Promise.all(batch.map(ch => quickTest(ch.url)));
+                        const batchActive = [];
+                        batch.forEach((ch, idx) => { if (batchResults[idx]) batchActive.push(ch); });
+                        if (batchActive.length > 0) {
+                            const existingUrls = new Set(activeChannels.map(ch => ch.url));
+                            const toAdd = batchActive.filter(ch => !existingUrls.has(ch.url));
+                            activeChannels = [...activeChannels, ...toAdd];
+                            renderActiveChannels(searchInput.value);
+                            saveActiveChannels();
+                        }
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+                    // تحديث شريط التقدم
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                } else {
+                    // جميع القنوات مخزنة، نضع التقدم كاملاً
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                }
+                // بدء الاختبار الدوري
+                startPeriodicTesting();
+                return;
+            }
+
+            // 2. لا يوجد تخزين محلي -> نبدأ الفحص من الصفر
             const firstBatch = allChannels.slice(0, 10);
             testingIndex = 10;
             const results = await Promise.all(firstBatch.map(ch => quickTest(ch.url)));
             firstBatch.forEach((ch, idx) => { if (results[idx]) activeChannels.push(ch); });
+            if (activeChannels.length > 0) saveActiveChannels();
+
             loadingScreen.classList.add('hidden');
             mainApp.classList.add('visible');
             renderActiveChannels('');
@@ -2622,17 +2709,33 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             setTimeout(testNextBatch, 5000);
         }
 
-        // أحداث الفيديو
+        // ================================================================
+        //  18. أحداث الفيديو
+        // ================================================================
         video.addEventListener('error', (e) => {
-            console.warn('فيديو خطأ');
+            console.warn('فيديو خطأ، نحاول إعادة التشغيل');
             if (currentChannel) {
+                // نحاول إعادة تشغيل القناة الحالية بعد 3 ثوانٍ
+                setTimeout(() => {
+                    if (currentChannel) {
+                        initHLS(currentChannel.url);
+                    }
+                }, 3000);
+                // نزيل القناة من القائمة مؤقتاً لتجنب التكرار، لكننا لا نحذفها نهائياً
+                // سيتم اختبارها دورياً وإذا كانت لا تزال شغالة ستعود
                 const url = currentChannel.url;
                 const idx = activeChannels.findIndex(ch => ch.url === url);
                 if (idx !== -1) {
                     activeChannels.splice(idx, 1);
                     renderActiveChannels(searchInput.value);
-                    if (activeChannels.length > 0) playChannel(activeChannels[0]);
-                    else { video.pause(); currentChannel = null; document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات شغالة'; }
+                    saveActiveChannels();
+                    if (activeChannels.length > 0) {
+                        playChannel(activeChannels[0]);
+                    } else {
+                        video.pause();
+                        currentChannel = null;
+                        document.getElementById('watermarkText').textContent = '⚡ لا توجد قنوات شغالة';
+                    }
                 }
             }
         });
@@ -2643,7 +2746,6 @@ https://player.smotrim.ru/iframe/stream/live_id/4941?checkedby:iptvcat.net`;
             else document.exitFullscreen();
         });
 
-        // دالة البحث
         window.filterChannels = function() {
             renderActiveChannels(searchInput.value);
         };
